@@ -109,7 +109,7 @@ app.get('/api/health', async (req, res) => {
     await pool.query('SELECT 1');
     res.json({ ok: true, database: 'connected' });
   } catch (err) {
-    console.error('Database health check failed:', err.code, err.message);
+    console.error('DB health error:', err.stack || err);
     res.status(503).json({ ok: false, database: 'unavailable' });
   }
 });
