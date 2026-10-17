@@ -104,9 +104,14 @@ async function memberView(row) {
 }
 function dateOnly(v) { return v instanceof Date ? v.toISOString().slice(0,10) : String(v).slice(0,10); }
 
-app.get('/api/health', async (req,res) => {
-  try { await pool.query('SELECT 1'); res.json({ ok: true, database: 'connected' }); }
-  catch { res.status(503).json({ ok:false, database:'unavailable' }); }
+app.get('/api/health', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ ok: true, database: 'connected' });
+  } catch (err) {
+    console.error('Database health check failed:', err.code, err.message);
+    res.status(503).json({ ok: false, database: 'unavailable' });
+  }
 });
 
 app.get('/api/plans', async (req,res) => {
