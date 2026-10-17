@@ -8,21 +8,22 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 
-const app = express();
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || '127.0.0.1',
-  port: Number(process.env.DB_PORT || 3306),
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME || 'ironvault',
-  ssl: process.env.DB_HOST
-    ? { rejectUnauthorized: false }
-    : undefined,
-  waitForConnections: true,
-  connectionLimit: 10,
-  timezone: '+00:00',
-  decimalNumbers: true
-});
+  const app = express();
+  app.set('trust proxy', 1);
+  const pool = mysql.createPool({
+    host: process.env.DB_HOST || '127.0.0.1',
+    port: Number(process.env.DB_PORT || 3306),
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME || 'ironvault',
+    ssl: process.env.DB_HOST
+      ? { rejectUnauthorized: false }
+      : undefined,
+    waitForConnections: true,
+    connectionLimit: 10,
+    timezone: '+00:00',
+    decimalNumbers: true
+  });
 
 app.disable('x-powered-by');
 app.use(helmet({ contentSecurityPolicy: false }));
