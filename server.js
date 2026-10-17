@@ -185,16 +185,60 @@ app.post('/api/contact', rateLimit({ windowMs: 60 * 60 * 1000, limit: 8 }), asyn
   }
 });
 
-app.post('/api/auth/login', async (req,res) => {
-  const { email, password } = req.body || {};
-  if (typeof email !== 'string' || typeof password !== 'string') return res.status(400).json({error:'Email and password are required.'});
-  const [rows] = await pool.execute('SELECT id,name,email,password_hash FROM admins WHERE email=? LIMIT 1', [email.toLowerCase().trim()]);
-  if (!rows.length || !(await bcrypt.compare(password, rows[0].password_hash))) return res.status(401).json({error:'Invalid email or password.'});
-  req.session.regenerate(err => {
-    if (err) return res.status(500).json({error:'Could not start a secure session.'});
-    req.session.admin = { id: rows[0].id, name: rows[0].name, email: rows[0].email };
-    res.json({admin:req.session.admin});
-  });
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body || {};
+
+    if (typeof email !== 'string' ||
+        typeof password !== 'string') {
+      return res.status(400).json({
+        error: 'Email and password are required.'
+      });
+    }
+
+    const [rows] = await pool.execute(
+      'SELECT id, name, email, password_hash FROM admins WHERE email = ? LIMIT 1',
+      [email.toLowerCase().trim()]
+    );
+
+    if (
+      !rows.length ||
+      !(await bcrypt.compare(password, rows[0].password_hash))
+    ) {
+      return res.status(401).json({
+        error: 'Invalid email or password.'
+      });
+    }
+
+    req.session.regenerate(err => {
+      if (err) {
+        console.error('Session regenerate error:', err);
+        return res.status(500).json({
+          error: 'Could not start a secure session.'
+        });
+      }
+
+      req.session.admin = {
+        id: rows[0].id,
+        name: rows[0].name,
+        email: rows[0].email
+      };
+
+      req.session.save(err => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.status(500).json({
+            error: 'Could not save the login session.'
+          });
+        }
+
+        res.json({ admin: req.session.admin });
+      });
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Login failed.' });
+  }
 });
 app.get('/api/auth/me', (req,res) => req.session.admin ? res.json({admin:req.session.admin}) : res.status(401).json({error:'Not logged in.'}));
 app.post('/api/auth/logout', (req,res) => req.session.destroy(() => { res.clearCookie('ironvault.sid'); res.json({ok:true}); }));
