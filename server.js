@@ -16,7 +16,7 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME || 'ironvault',
   ssl: process.env.DB_HOST
-    ? { rejectUnauthorized: true }
+    ? { rejectUnauthorized: false }
     : undefined,
   waitForConnections: true,
   connectionLimit: 10,
