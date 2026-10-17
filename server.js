@@ -106,11 +106,26 @@ function dateOnly(v) { return v instanceof Date ? v.toISOString().slice(0,10) : 
 
 app.get('/api/health', async (req, res) => {
   try {
-    await pool.query('SELECT 1');
-    res.json({ ok: true, database: 'connected' });
+    const [rows] = await pool.query('SELECT 1 AS test');
+    res.json({
+      ok: true,
+      database: 'connected',
+      test: rows[0].test
+    });
   } catch (err) {
-    console.error('DB health error:', err.stack || err);
-    res.status(503).json({ ok: false, database: 'unavailable' });
+    console.error('DB diagnostic:', {
+      name: err.name,
+      message: err.message,
+      code: err.code,
+      errno: err.errno,
+      sqlState: err.sqlState
+    });
+
+    res.status(503).json({
+      ok: false,
+      database: 'unavailable',
+      error: err.code || err.name
+    });
   }
 });
 
